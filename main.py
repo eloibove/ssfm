@@ -104,29 +104,36 @@ class SfM(object):
     # This method computes the first X points listed in the dataset
     def compute_points(self, nPoints):
         point_data = []
+        # Iterate on all the points
         for i,point in enumerate(self.points):
+
             num_instances = np.shape(point.instances)[0]
             point_cameras = []
             points_to_compute = []
+
+            # Iterate on all the instances of each point
             for inst in point.instances:
                 point_cameras.append(self.cameras[int(inst["id"])])
                 points_to_compute.append(inst["xy"])
             point_cameras = np.array(point_cameras)
             points_to_compute = np.array(points_to_compute)
 
+            # Compute the DLT for this point
             point3d = reconstruct_DLT(num_instances, point_cameras, points_to_compute)
 
+            # Create the point cloud data
             a = 255
             rgb = struct.unpack('I', struct.pack('BBBB', self.color3d[i][2], self.color3d[i][1], self.color3d[i][0], a))[0] 
             pt = [point3d[0], point3d[1], point3d[2], rgb]
             point_data.append(pt)
             
-        
+        # Define the point cloud metadata
         fields = [PointField('x', 0, PointField.FLOAT32, 1),
             PointField('y', 4, PointField.FLOAT32, 1),
             PointField('z', 8, PointField.FLOAT32, 1),
             PointField('rgba', 12, PointField.UINT32, 1),]
         
+        # Create and publish the message in a loop
         header = Header()
         header.frame_id = "map"
         pc2 = point_cloud2.create_cloud(header, fields, point_data)

@@ -45,26 +45,23 @@ def reconstruct_DLT(num_cameras, cameras, points):
         x, y = points[i][0], points[i][1] 
 
         # Undistort the points ???
-        #x = u*(1+cam[7]*(u**2+v**2)+cam[8]*(u**2+v**2)**2)
-        #y = v*(1+cam[7]*(u**2+v**2)+cam[8]*(u**2+v**2)**2)
+        # x = u*(1+cam[7]*(u**2+v**2)+cam[8]*(u**2+v**2)**2)
+        # y = v*(1+cam[7]*(u**2+v**2)+cam[8]*(u**2+v**2)**2)
 
-        # Construct the matrix 
-        #M.append( [P[0]-x*P[8], P[1]-x*P[9], P[2]-x*P[10], P[3]-x*P[11]] )
-        #M.append( [P[4]-y*P[8], P[5]-y*P[9], P[6]-y*P[10], P[7]-y*P[11]] )
+        # Construct the matrices
+        # M.append( [P[0]-x*P[8], P[1]-x*P[9], P[2]-x*P[10], P[3]-x*P[11]] )
+        # M.append( [P[4]-y*P[8], P[5]-y*P[9], P[6]-y*P[10], P[7]-y*P[11]] )
 
         M.append([x*P[8]-P[0], x*P[9]-P[1], x*P[10]-P[2]])
         M.append([y*P[8]-P[4], y*P[9]-P[5], y*P[10]-P[6]])
         Y.append(P[3]-x)
         Y.append(P[7]-y)
     
-    #Solve the linear problem
+    # Solve the linear problem (Y = M·X --> inv([M'M])*M'*Y)
+    # (Multiply by the pseudo-inverse)
     M = np.array(M)
     Y = np.array(Y)
     MTM = np.matmul(np.transpose(M), M)
     X = np.matmul(np.matmul(np.linalg.inv(MTM),np.transpose(M)),Y)
 
-    #_, _, S = np.linalg.svd(np.asarray(M))
-
-    #Retrieve world point coords
-    #point = S[-1,0:-1]/S[-1,-1]
     return X
