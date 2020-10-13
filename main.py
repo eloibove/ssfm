@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
+import cv2
 import os 
-from sfm_utils import CameraInfo, PointData, triangulate_points
+from sfm_utils import CameraInfo, PointData, reconstruct_DLT
 
 import struct
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, PointField
 from std_msgs.msg import Header
+
 
 ## This class is used to read the notredame image dataset and compute its 3D reconstruction ##
 ## The reconstruction is published as a PointCloud2 ROS message ##
@@ -20,8 +22,14 @@ class SfM(object):
         self.cameras = []
         self.points = []
 
-        with open(filename) as input_file:
+        self.points3d = []
+        self.color3d = []
+        self.points2d = []
+        self.camera_indices = []
+        self.point_indices = []
 
+        with open(filename) as input_file:
+            point_id = 0
             for i, line in enumerate(input_file):
                 if i == 0 : continue
                 if i == 1 :
@@ -50,7 +58,12 @@ class SfM(object):
                     elif (i-2)%5 == 4 :
                         self.t = np.fromstring(line, dtype=float, sep=' ')
                         self.R = np.array([self.R1, self.R2, self.R3])
-                        self.cameras.append(CameraInfo(self.f, self.K, self.R, self.t))
+                        #self.cameras.append(CameraInfo(self.f, self.K, self.R, self.t))
+                        rvec = cv2.Rodrigues(self.R)
+                        self.cameras.append(np.array([float(rvec[0][0]), float(rvec[0][1]), float(rvec[0][2]),
+                                             self.t[0], self.t[1], self.t[2],
+                                             self.f, self.K[0], self.K[1]]))
+                        
                 else:
                     # Read the points
                     if (i-1)%3 == 0 : 
@@ -70,36 +83,44 @@ class SfM(object):
                             x = float(line[j+2])
                             y = float(line[j+3])
                             pointdata.add_instance(cam_id, x, y)
+                            self.camera_indices.append(cam_id)
+                            self.points2d.append(np.array([x,y]))
+                            self.point_indices.append(point_id)
+                        point_id = point_id + 1
 
                         self.points.append(pointdata)
+                        self.points3d.append(self.XYZ)
+                        self.color3d.append(self.RGB)
+
+            self.points3d = np.array(self.points3d)
+            self.points2d = np.array(self.points2d)
+            self.color3d = np.array(self.color3d)
+            self.camera_indices = np.array(self.camera_indices)
+            self.point_indices = np.array(self.point_indices)
+            self.cameras = np.array(self.cameras)
                                             
 
 
     # This method computes the first X points listed in the dataset
     def compute_points(self, nPoints):
         point_data = []
-        for i, point in enumerate(self.points):
-            if i > nPoints : break
+        for i,point in enumerate(self.points):
+            num_instances = np.shape(point.instances)[0]
+            point_cameras = []
+            points_to_compute = []
+            for inst in point.instances:
+                point_cameras.append(self.cameras[int(inst["id"])])
+                points_to_compute.append(inst["xy"])
+            point_cameras = np.array(point_cameras)
+            points_to_compute = np.array(points_to_compute)
 
-            # TODO: Compute x, y, z based on the xy image coords
-            # First try: only based on two images
-            caminfo1 = self.cameras[int(point.instances[0]["id"])]
-            caminfo2 = self.cameras[int(point.instances[1]["id"])]
-            
-            xy1 = point.instances[0]["xy"]
-            xy2 = point.instances[1]["xy"]
+            point3d = reconstruct_DLT(num_instances, point_cameras, points_to_compute)
 
-            point3d = triangulate_points(caminfo1, caminfo2, xy1, xy2)
-
-            print(point3d)
-            print([point.x, point.y, point.z])
             a = 255
-            rgb = struct.unpack('I', struct.pack('BBBB', point.b, point.g, point.r, a))[0] 
+            rgb = struct.unpack('I', struct.pack('BBBB', self.color3d[i][2], self.color3d[i][1], self.color3d[i][0], a))[0] 
             pt = [point3d[0], point3d[1], point3d[2], rgb]
             point_data.append(pt)
-            break
             
-
         
         fields = [PointField('x', 0, PointField.FLOAT32, 1),
             PointField('y', 4, PointField.FLOAT32, 1),
@@ -129,4 +150,4 @@ if __name__ == '__main__':
     sfm = SfM('./NotreDame/notredame.out') 
 
     # Compute the first 100 points
-    sfm.compute_points(30000)
+    sfm.compute_points(1000)
