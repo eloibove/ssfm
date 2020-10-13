@@ -9,7 +9,7 @@ import struct
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, PointField
 from std_msgs.msg import Header
-
+from test import DLTcalib
 
 ## This class is used to read the notredame image dataset and compute its 3D reconstruction ##
 ## The reconstruction is published as a PointCloud2 ROS message ##
@@ -103,6 +103,7 @@ class SfM(object):
 
     # This method computes the first X points listed in the dataset
     def compute_points(self, nPoints):
+
         point_data = []
         # Iterate on all the points
         for i,point in enumerate(self.points):
@@ -110,17 +111,43 @@ class SfM(object):
             num_instances = np.shape(point.instances)[0]
             point_cameras = []
             points_to_compute = []
+            camera_indices = []
 
             # Iterate on all the instances of each point
             for inst in point.instances:
                 point_cameras.append(self.cameras[int(inst["id"])])
+                camera_indices.append(int(inst["id"]))
                 points_to_compute.append(inst["xy"])
             point_cameras = np.array(point_cameras)
             points_to_compute = np.array(points_to_compute)
+            """
+            cam = point_cameras[0]
+            R = cv2.Rodrigues(cam[0:3])[0]
+            t = cam[3:6]
+            T = np.array([R[0][0], R[0][1], R[0][2], t[0],
+                          R[1][0], R[1][1], R[1][2], t[1],
+                          R[2][0], R[2][1], R[2][2], t[2]]).reshape(3,4)
+            p = np.array([point.x, point.y, point.z, 1]).reshape(4,1)
+            uv = np.matmul(T,p)
+            """
+            #print(uv)
+            #print(-cam[6]*cv2.convertPointsFromHomogeneous(np.transpose(uv))[0][0])
+            #print(points_to_compute[0])
+            
+            #print(point_cameras[0:3])
+            #print(points_to_compute[0:3])
+            #print(camera_indices[0:3])
+            
 
             # Compute the DLT for this point
             point3d = reconstruct_DLT(num_instances, point_cameras, points_to_compute)
+            print(point3d)
+            print([point.x,point.y,point.z])
 
+
+            #print([point.x,point.y,point.z])
+            
+            
             # Create the point cloud data
             a = 255
             rgb = struct.unpack('I', struct.pack('BBBB', self.color3d[i][2], self.color3d[i][1], self.color3d[i][0], a))[0] 
