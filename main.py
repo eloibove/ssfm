@@ -15,7 +15,7 @@ if __name__ == '__main__':
     rospy.init_node('sfm')
 
     # Get the parameters from launchfile)
-    filename = rospy.get_param('~filename', 'src/sfm/NotreDame/notredame.out')
+    filename = rospy.get_param('~filename', 'src/ssfm/NotreDame/notredame.out')
     topic = rospy.get_param('~topic', '/reconstructed_cloud')
 
     # Init publisher
