@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 import cv2
 import os 
-from sfm_utils import CameraInfo, PointData, reconstruct_DLT
+from sfm_utils import CameraInfo, PointData, reconstruct_DLT, reproject_points
 
 import struct
 from sensor_msgs import point_cloud2
@@ -97,13 +97,13 @@ class SfM(object):
             self.camera_indices = np.array(self.camera_indices)
             self.point_indices = np.array(self.point_indices)
             self.cameras = np.array(self.cameras)
+            self.est_points3d = []
                                             
 
-    # This method computes the first X points listed in the dataset
+    # This method computes the first N points listed in the dataset
     # retuns the reconstruction mean squared error
     def compute_points(self, nPoints):
 
-        reconstruction_error = 0
         point_data = []
         # Iterate on all the points
         for i,point in enumerate(self.points):
@@ -128,7 +128,7 @@ class SfM(object):
         
             # Compute the DLT for this point
             point3d = reconstruct_DLT(num_instances, point_cameras, points_to_compute)
-            reconstruction_error = reconstruction_error + (point3d[0]-point.x)**2 + (point3d[1]-point.y)**2 + (point3d[2]-point.z)**2 
+            self.est_points3d.append(point3d)
 
             # Create the point cloud data
             a = 255
@@ -147,6 +147,27 @@ class SfM(object):
         header = Header()
         header.frame_id = "map"
         pc2 = point_cloud2.create_cloud(header, fields, point_data)
-        reconstruction_error /= total_points
+        self.est_points3d = np.array(self.est_points3d)
 
-        return pc2, reconstruction_error, total_points
+        return pc2, total_points
+
+
+    # Returns the mean absolute reprojection error for the predictions
+    # made using the DLT
+    def compute_reprojection_err(self):
+
+        cumulative_err = 0
+        for i, point in enumerate(self.points):
+            uvs_gt = []
+            cameras = []
+            for inst in point.instances:
+                cameras.append(self.cameras[int(inst["id"])])
+                uvs_gt.append(inst["xy"])
+            cameras = np.array(cameras)
+            uvs_gt = np.array(uvs_gt)
+            uvs = reproject_points(self.est_points3d[i], cameras)
+            point_err = np.sum(np.abs(uvs_gt-uvs))
+            cumulative_err += point_err
+        cumulative_err /= np.shape(self.est_points3d)[0]
+        
+        return cumulative_err

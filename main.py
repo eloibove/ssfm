@@ -14,8 +14,7 @@ if __name__ == '__main__':
     # Init ros
     rospy.init_node('sfm')
 
-    # Get the parameters from launchfile
-    num_points = int(rospy.get_param('~num_points', '127430'))
+    # Get the parameters from launchfile)
     filename = rospy.get_param('~filename', 'src/sfm/NotreDame/notredame.out')
     topic = rospy.get_param('~topic', '/reconstructed_cloud')
 
@@ -29,12 +28,14 @@ if __name__ == '__main__':
 
     # Compute the first num_points    
     print('Starting computation...')
-    pc, error, np = sfm.compute_points(num_points)
-
+    pc, np = sfm.compute_points(127431)
     print('Reconstructed ' + str(np) + ' points!')
-    print('Reconstruction MSE = ' + str(error))
-    print('Subscribe to ' + topic + ' to see the results in RViz!')
 
+    print('Computing reprojection error...')
+    rpe = sfm.compute_reprojection_err()
+    print('Mean absolute reprojection error = ' + str(rpe) + ' pixels!')
+
+    print('Subscribe to ' + topic + ' to see the results in RViz!')
     # Publish the pc in a loop to avoid the program to finish
     while not rospy.is_shutdown():
         pc.header.stamp = rospy.Time.now()
