@@ -89,7 +89,8 @@ def reproject_points(point, cameras):
         projections.append(np.array([uv[0][0],uv[1][0]]))
     return np.array(projections)
 
-
+# This function has been adapted from 
+# https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
 def rotate(points, rot_vecs):
     """Rotate points by given rotation vectors.
     
@@ -105,6 +106,8 @@ def rotate(points, rot_vecs):
 
     return cos_theta * points + sin_theta * np.cross(v, points) + dot * (1 - cos_theta) * v
 
+# This function has been adapted from 
+# https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
 def project(points, camera_params):
     """Convert 3-D points to 2-D by projecting onto images."""
     points_proj = rotate(points, camera_params[:, :3])
@@ -118,6 +121,8 @@ def project(points, camera_params):
     points_proj *= (r * f)[:, np.newaxis]
     return points_proj
 
+# This function has been adapted from 
+# https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
 def fun(params, n_cameras, n_points, camera_indices, point_indices, points_2d):
     """Compute residuals.
     
@@ -128,7 +133,8 @@ def fun(params, n_cameras, n_points, camera_indices, point_indices, points_2d):
     points_proj = project(points_3d[point_indices], camera_params[camera_indices])
     return (points_proj - points_2d).ravel()
     
-
+# This function has been adapted from 
+# https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
 from scipy.sparse import lil_matrix
 def bundle_adjustment_sparsity(n_cameras, n_points, camera_indices, point_indices):
     m = camera_indices.size * 2

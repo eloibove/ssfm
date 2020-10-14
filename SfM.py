@@ -174,19 +174,6 @@ class SfM(object):
         
         return cumulative_err
 
-    # Refine the parameters obtained by the DLT
-    def bundle_adjustment(self):
-        num_cameras = np.shape(self.cameras)[0]
-        num_points = np.shape(self.est_points3d)[0]
-        x0 = np.hstack((self.cameras.ravel(), self.est_points3d.ravel()))
-        f0 = fun(x0, num_cameras, num_points, self.camera_indices, self.point_indices, self.points2d)
-        print(np.abs(np.sum(f0))) 
-        A = bundle_adjustment_sparsity(num_cameras, num_points, self.camera_indices, self.point_indices)
-        res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf',
-                            args=(num_cameras, num_points, self.camera_indices, self.point_indices, self.points2d))
-        print(np.abs(np.sum(res.fun)))
-        self.est_points3d = res.x[num_cameras * 9:].reshape((num_points, 3))
-
     # Return estimated points 3d as a ROS pointcloud message
     def get_pointcloud(self):
 
@@ -211,3 +198,20 @@ class SfM(object):
         self.est_points3d = np.array(self.est_points3d)
 
         return pc2
+
+    
+    # Refine the parameters obtained by the DLT
+    # This function has been adapted from 
+    # https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
+
+    def bundle_adjustment(self):
+        num_cameras = np.shape(self.cameras)[0]
+        num_points = np.shape(self.est_points3d)[0]
+        x0 = np.hstack((self.cameras.ravel(), self.est_points3d.ravel()))
+        f0 = fun(x0, num_cameras, num_points, self.camera_indices, self.point_indices, self.points2d)
+        print(np.abs(np.sum(f0))) 
+        A = bundle_adjustment_sparsity(num_cameras, num_points, self.camera_indices, self.point_indices)
+        res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf',
+                            args=(num_cameras, num_points, self.camera_indices, self.point_indices, self.points2d))
+        print(np.abs(np.sum(res.fun)))
+        self.est_points3d = res.x[num_cameras * 9:].reshape((num_points, 3))
