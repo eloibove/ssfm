@@ -54,6 +54,6 @@ http://kwon3d.com/theory/dlt/dlt.html
 https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
 
 ## Images
-![DLT only](https://raw.github.com/eloibove/ssfm/blob/main/images/DLT.png)
+![DLT only](https://github.com/eloibove/ssfm/blob/main/images/DLT.png?raw=true)
 ![DLT + Bundle adjustment 1](https://raw.github.com/eloibove/ssfm/blob/main/images/DLT%2BBA.png)
 ![DLT + Bundle adjustment 2](https://raw.github.com/eloibove/ssfm/blob/main/images/DLT%2BBA2.png)
