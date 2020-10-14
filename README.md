@@ -51,6 +51,7 @@ This package relies on the Direct Linear Transform method. This method allows th
 
 ## References
 http://kwon3d.com/theory/dlt/dlt.html
+
 https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
 
 ## Images
