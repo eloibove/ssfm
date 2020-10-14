@@ -4,11 +4,14 @@ import numpy as np
 import cv2
 import os 
 from sfm_utils import CameraInfo, PointData, reconstruct_DLT, reproject_points
+from sfm_utils import bundle_adjustment_sparsity, fun
 
 import struct
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, PointField
 from std_msgs.msg import Header
+from scipy.optimize import least_squares
+
 
 ## This class is used to read the notredame image dataset and compute its 3D reconstruction ##
 ## The reconstruction is returned as a PointCloud2 ROS message ##
@@ -17,7 +20,7 @@ class SfM(object):
     # The init method reads the camera parameters from the provided filename
     # The input file format should be as in the bundler-v0.3:
     # http://www.cs.cornell.edu/~snavely/bundler/bundler-v0.3-manual.html#S4
-    def __init__(self, filename):
+    def __init__(self, filename, num_p):
         self.filename = filename
         self.cameras = []
         self.points = []
@@ -90,6 +93,8 @@ class SfM(object):
                         self.points.append(pointdata)
                         self.points3d.append(self.XYZ)
                         self.color3d.append(self.RGB)
+                        if(point_id >= num_p):
+                            break
 
             self.points3d = np.array(self.points3d)
             self.points2d = np.array(self.points2d)
@@ -100,9 +105,9 @@ class SfM(object):
             self.est_points3d = []
                                             
 
-    # This method computes the first N points listed in the dataset
+    # This method computes the DLT reconstruction
     # retuns the reconstruction mean squared error
-    def compute_points(self, nPoints):
+    def compute_points(self):
 
         point_data = []
         # Iterate on all the points
@@ -110,8 +115,6 @@ class SfM(object):
 
             # Stop at nPoints
             total_points = i
-            if i >= nPoints:
-                break
 
             num_instances = np.shape(point.instances)[0]
             point_cameras = []
@@ -153,7 +156,6 @@ class SfM(object):
 
 
     # Returns the mean absolute reprojection error for the predictions
-    # made using the DLT
     def compute_reprojection_err(self):
 
         cumulative_err = 0
@@ -171,3 +173,41 @@ class SfM(object):
         cumulative_err /= np.shape(self.est_points3d)[0]
         
         return cumulative_err
+
+    # Refine the parameters obtained by the DLT
+    def bundle_adjustment(self):
+        num_cameras = np.shape(self.cameras)[0]
+        num_points = np.shape(self.est_points3d)[0]
+        x0 = np.hstack((self.cameras.ravel(), self.est_points3d.ravel()))
+        f0 = fun(x0, num_cameras, num_points, self.camera_indices, self.point_indices, self.points2d)
+        print(np.abs(np.sum(f0))) 
+        A = bundle_adjustment_sparsity(num_cameras, num_points, self.camera_indices, self.point_indices)
+        res = least_squares(fun, x0, jac_sparsity=A, verbose=2, x_scale='jac', ftol=1e-4, method='trf',
+                            args=(num_cameras, num_points, self.camera_indices, self.point_indices, self.points2d))
+        print(np.abs(np.sum(res.fun)))
+        self.est_points3d = res.x[num_cameras * 9:].reshape((num_points, 3))
+
+    # Return estimated points 3d as a ROS pointcloud message
+    def get_pointcloud(self):
+
+        point_data = []
+        for i, point3d in enumerate(self.est_points3d):
+            # Create the point cloud data
+            a = 255
+            rgb = struct.unpack('I', struct.pack('BBBB', self.color3d[i][2], self.color3d[i][1], self.color3d[i][0], a))[0] 
+            pt = [point3d[0], point3d[1], point3d[2], rgb]
+            point_data.append(pt)
+        
+        # Define the point cloud metadata
+        fields = [PointField('x', 0, PointField.FLOAT32, 1),
+            PointField('y', 4, PointField.FLOAT32, 1),
+            PointField('z', 8, PointField.FLOAT32, 1),
+            PointField('rgba', 12, PointField.UINT32, 1),]
+        
+        # Create the message and return
+        header = Header()
+        header.frame_id = "map"
+        pc2 = point_cloud2.create_cloud(header, fields, point_data)
+        self.est_points3d = np.array(self.est_points3d)
+
+        return pc2
