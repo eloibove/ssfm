@@ -1,6 +1,6 @@
 # ssfm
 
-This ros package implements an SfM class that allows the user to get the reconstructed 3D points given a set of images, point correspondences, and camera parameters.
+This ros package implements an SfM class that allows the user to get the reconstructed 3D points given a set of images, point correspondences, and camera parameters. This package takes as input files the .out files created by bundler. The example dataset can be found at http://phototour.cs.washington.edu/datasets/
 
 ## Installation
 
@@ -10,7 +10,7 @@ Clone the ros package into a catkin workspace and compile it.
 git clone https://github.com/eloibove/ssfm
 ```
 
-Aside from basic ros packages, this package does not need any dependencies.
+Aside from basic ros packages, this package does not have any dependencies.
 
 ## Usage
 
@@ -33,7 +33,7 @@ The input filename and point cloud topic name are ROS parameters, and can be spe
 ```
 
 ## How it works
-This package relies on the Direct Linear Transform method. This method allows the triangulation of a 3D point based on 2D correspondences of the same point on various cameras (different viewpoints). This is done by arranging the problem x1=P1*X, x2=P2*X in a particular way so that it can be solved using Least Squares. This method is non-iterative and gives decent results with a low computation time. If the accuracy needs to be higher, a bundle adjustment algorithm that takes these results as input can improve the accuracy, also taking into account the lens distortion parameters, that the DLT method ignores.
+This package relies on the Direct Linear Transform method. This method allows the triangulation of a 3D point based on 2D correspondences of the same point on various cameras (different viewpoints). This is done by arranging the problem x1=P1*X, x2=P2*X in a particular way so that it can be solved using Least Squares. This method is non-iterative and gives decent results with a low computation time. If the accuracy needs to be higher, a bundle adjustment algorithm that takes these results as input can improve the accuracy, also taking into account the lens distortion parameters, that the DLT basic method ignores.
 
 ## References
 http://kwon3d.com/theory/dlt/dlt.html
