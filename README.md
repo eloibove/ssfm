@@ -27,9 +27,9 @@ rosrun sfm main.py
 rviz
 ```
 ### Parameters
-The input filename, number of points to compute and point cloud topic name are ROS parameters, and can be specified when running the node in the following way:
+The input filename and point cloud topic name are ROS parameters, and can be specified when running the node in the following way:
 ```bash
- rosrun sfm main.py _filename:=file.txt _num_points:=100 _topic:=/topic
+ rosrun sfm main.py _filename:=file.txt _topic:=/topic
 ```
 
 ## How it works
