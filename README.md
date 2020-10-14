@@ -54,6 +54,10 @@ http://kwon3d.com/theory/dlt/dlt.html
 https://scipy-cookbook.readthedocs.io/items/bundle_adjustment.html
 
 ## Images
+Image 1. Reconstruction using DLT only.
+Image 2. Reconstruction using DLT(red) + BA(green) to refine.  
+Image 3. Reconstruction using DLT(100K points, coloured) + BA(5K points, green) to refine. 
+
 ![DLT only](https://github.com/eloibove/ssfm/blob/main/images/DLT.png?raw=true)
 ![DLT + Bundle adjustment 1](https://github.com/eloibove/ssfm/blob/main/images/DLT%2BBA.png?raw=true)
 ![DLT + Bundle adjustment 2](https://github.com/eloibove/ssfm/blob/main/images/DLT%2BBA2.png?raw=true)
