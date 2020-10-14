@@ -18,7 +18,7 @@ First run the roscore
 ```bash
 roscore
 ```
-Then run the main node with the default parameters, and run rviz to visualize the result, subscribing to /reconstructed_cloud
+Then run the main node with the default parameters, and run rviz to visualize the result (a colored PointCloud2), subscribing to /reconstructed_cloud
 
 ```bash
 rosrun sfm main.py
