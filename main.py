@@ -15,7 +15,7 @@ if __name__ == '__main__':
     rospy.init_node('sfm')
 
     # Get the parameters from launchfile
-    num_points = int(rospy.get_param('~num_points', '1000'))
+    num_points = int(rospy.get_param('~num_points', '127430'))
     filename = rospy.get_param('~filename', 'src/sfm/NotreDame/notredame.out')
     topic = rospy.get_param('~topic', '/reconstructed_cloud')
 
@@ -29,9 +29,9 @@ if __name__ == '__main__':
 
     # Compute the first num_points    
     print('Starting computation...')
-    pc, error = sfm.compute_points(num_points)
+    pc, error, np = sfm.compute_points(num_points)
 
-    print('Reconstructed ' + str(num_points) + ' points!')
+    print('Reconstructed ' + str(np) + ' points!')
     print('Reconstruction MSE = ' + str(error))
     print('Subscribe to ' + topic + ' to see the results in RViz!')
 

@@ -108,6 +108,11 @@ class SfM(object):
         # Iterate on all the points
         for i,point in enumerate(self.points):
 
+            # Stop at nPoints
+            total_points = i
+            if i >= nPoints:
+                break
+
             num_instances = np.shape(point.instances)[0]
             point_cameras = []
             points_to_compute = []
@@ -142,6 +147,6 @@ class SfM(object):
         header = Header()
         header.frame_id = "map"
         pc2 = point_cloud2.create_cloud(header, fields, point_data)
-        reconstruction_error /= nPoints
+        reconstruction_error /= total_points
 
-        return pc2, reconstruction_error
+        return pc2, reconstruction_error, total_points
