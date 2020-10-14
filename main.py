@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     # Compute the first num_points using the DLT   
     print('Starting DLT computation...')
-    pc, np = sfm.compute_points(127431)
+    pc, np = sfm.compute_points()
     print('Reconstructed ' + str(np) + ' points!')
 
     pc2 = None
