@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
-import cv2
 import os
 from sfm_utils import CameraInfo, PointData, reconstruct_DLT
 from SfM import SfM
@@ -19,9 +18,6 @@ if __name__ == '__main__':
     num_points = int(rospy.get_param('~num_points', '1000'))
     filename = rospy.get_param('~filename', 'src/sfm/NotreDame/notredame.out')
     topic = rospy.get_param('~topic', '/reconstructed_cloud')
-    print(num_points)
-    print(filename)
-    print(topic)
 
     # Init publisher
     pub = rospy.Publisher(topic, PointCloud2, queue_size=1)

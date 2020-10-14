@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
 import cv2
-import glob
 
 ## This class stores the camera parameters ##
 class CameraInfo(object):
